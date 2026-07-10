@@ -11,14 +11,14 @@ import {
   fetchDashboardData,
   addEmployee,
   deleteEmployee,
-  updateEmployeeStatus,
+  setEmployees,
 } from '../store/dashboardSlice';
-import type { Employee } from '../store/dashboardSlice';
+import { startRealtimePolling } from '../services/realtimeService';
+import type { Employee } from '../models/DashboardModels';
 
 export const useDashboard = () => {
   const dispatch = useAppDispatch();
 
-  const employees = useAppSelector((state) => state.dashboard.employees);
   const filteredEmployees = useAppSelector((state) => state.dashboard.filteredEmployees);
   const filters = useAppSelector((state) => state.dashboard.filters);
   const stats = useAppSelector((state) => state.dashboard.stats);
@@ -89,15 +89,14 @@ export const useDashboard = () => {
     [dispatch]
   );
 
-  const toggleEmployeeStatus = useCallback(
-    (id: string, status: 'Active' | 'Inactive') => {
-      dispatch(updateEmployeeStatus({ id, status }));
-    },
-    [dispatch]
-  );
+  const startRealtimeUpdates = useCallback(() => {
+    const poller = startRealtimePolling((employees: Employee[]) => {
+      dispatch(setEmployees(employees));
+    });
+    return poller;
+  }, [dispatch]);
 
   return {
-    employees,
     filteredEmployees,
     filters,
     stats,
@@ -113,6 +112,6 @@ export const useDashboard = () => {
     resetAllFilters,
     addNewEmployee,
     removeEmployee,
-    toggleEmployeeStatus,
+    startRealtimeUpdates,
   };
 };

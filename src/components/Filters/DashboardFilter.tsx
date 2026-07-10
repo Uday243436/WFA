@@ -1,42 +1,100 @@
+import { useState } from 'react';
 import {
   Box,
   Button,
   FormControl,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Paper,
   Select,
+  TextField,
   Typography,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
-import FilterAltIcon from '@mui/icons-material/FilterAlt';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import SearchIcon from '@mui/icons-material/Search';
+import { Calendar, RotateCcw, Search, SlidersHorizontal } from 'lucide-react';
 import { useDashboard } from '../../hooks/useDashboard';
+import type { DashboardFilters } from '../../models/DashboardModels';
 
 const departments = ['IT', 'HR', 'Finance', 'Sales', 'Marketing'];
 const roles = ['Developer', 'Tester', 'Manager', 'HR Executive'];
 const locations = ['Chennai', 'Bangalore', 'Hyderabad', 'Pune'];
-const statuses = ['Active', 'Inactive'];
+const statuses: DashboardFilters['status'][] = ['All', 'Active', 'Inactive'];
+
+const filterControlSx = {
+  '& .MuiInputLabel-root': {
+    color: 'var(--text-secondary)',
+  },
+  '& .MuiInputLabel-root.Mui-focused': {
+    color: 'var(--primary-accent)',
+  },
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '8px',
+    backgroundColor: 'var(--bg-surface)',
+    color: 'var(--text-primary)',
+  },
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--border-color)',
+  },
+  '& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--border-strong)',
+  },
+  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--primary-accent)',
+  },
+  '& .MuiSvgIcon-root': {
+    color: 'var(--text-secondary)',
+  },
+};
 
 export function DashboardFilter() {
-  const { filters, changeDepartment, changeRole, changeLocation, changeStatus, resetAllFilters } = useDashboard();
+  const { filters, changeDepartment, changeRole, changeLocation, changeStatus, changeSearchQuery, changeDateRange, resetAllFilters } = useDashboard();
+  const [searchText, setSearchText] = useState(filters.searchQuery);
+  const [startDate, setStartDate] = useState(filters.dateRange.startDate || '');
+  const [endDate, setEndDate] = useState(filters.dateRange.endDate || '');
 
   const handleApply = () => {
-    console.log('Current Filters:', filters);
+    changeSearchQuery(searchText);
+    changeDateRange(startDate || null, endDate || null);
+  };
+
+  const handleReset = () => {
+    setSearchText('');
+    setStartDate('');
+    setEndDate('');
+    resetAllFilters();
   };
 
   return (
     <Box sx={{ pt: 5, pb: 2 }}>
-      <Paper elevation={8} sx={{ maxWidth: 1200, mx: 'auto', p: 4, borderRadius: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <FilterAltIcon color="primary" fontSize="large" />
-            <Typography variant="h4" sx={{ fontWeight: 'bold' }} color="primary">
-              Workforce Dashboard
-            </Typography>
+      <Paper
+        elevation={12}
+        sx={{
+          maxWidth: 1200,
+          mx: 'auto',
+          p: 4,
+          borderRadius: '8px',
+          border: '1px solid var(--glass-border)',
+          background: 'var(--surface-gradient)',
+          boxShadow: 'var(--shadow-md)',
+          color: 'var(--text-primary)',
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+            <SlidersHorizontal color="primary" size={28} />
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', letterSpacing: 0, color: 'var(--primary-accent)' }}>
+                Workforce Dashboard
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
+                Refine your view with department, role, location, date range, and search filters.
+              </Typography>
+            </Box>
           </Box>
-          <Typography color="text.secondary">Dashboard Filters</Typography>
+          <Typography sx={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
+            4 filter categories · quick search
+          </Typography>
         </Box>
 
         <Box
@@ -46,7 +104,7 @@ export function DashboardFilter() {
             gap: 3,
           }}
         >
-          <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}>
+          <FormControl fullWidth sx={filterControlSx}>
             <InputLabel>Department</InputLabel>
             <Select
               value={filters.department === 'All' ? '' : filters.department}
@@ -62,7 +120,7 @@ export function DashboardFilter() {
             </Select>
           </FormControl>
 
-          <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}>
+          <FormControl fullWidth sx={filterControlSx}>
             <InputLabel>Role</InputLabel>
             <Select
               value={filters.role === 'All' ? '' : filters.role}
@@ -78,7 +136,7 @@ export function DashboardFilter() {
             </Select>
           </FormControl>
 
-          <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}>
+          <FormControl fullWidth sx={filterControlSx}>
             <InputLabel>Location</InputLabel>
             <Select
               value={filters.location === 'All' ? '' : filters.location}
@@ -94,12 +152,12 @@ export function DashboardFilter() {
             </Select>
           </FormControl>
 
-          <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}>
+          <FormControl fullWidth sx={filterControlSx}>
             <InputLabel>Status</InputLabel>
             <Select
               value={filters.status === 'All' ? '' : filters.status}
               label="Status"
-              onChange={(e: SelectChangeEvent<string>) => changeStatus((e.target.value || 'All') as any)}
+              onChange={(e: SelectChangeEvent<string>) => changeStatus((e.target.value || 'All') as DashboardFilters['status'])}
             >
               <MenuItem value="">All Status</MenuItem>
               {statuses.map((item) => (
@@ -111,21 +169,137 @@ export function DashboardFilter() {
           </FormControl>
         </Box>
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 5 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, minmax(0, 1fr))' },
+            gap: 3,
+            mt: 3,
+          }}
+        >
+          <TextField
+            fullWidth
+            label="Search"
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            variant="outlined"
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search color="rgba(100,116,139,0.8)" size={18} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{
+              ...filterControlSx,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '8px',
+                backgroundColor: 'var(--bg-surface)',
+                color: 'var(--text-primary)',
+              },
+            }}
+          />
+          <TextField
+            fullWidth
+            type="date"
+            label="Start Date"
+            value={startDate}
+            onChange={(event) => setStartDate(event.target.value)}
+            variant="outlined"
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+                sx: { left: 12 },
+              },
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Calendar color="rgba(100,116,139,0.65)" size={18} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{
+              ...filterControlSx,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '8px',
+                backgroundColor: 'var(--bg-surface)',
+                color: 'var(--text-primary)',
+                minHeight: 56,
+              },
+              '& .MuiOutlinedInput-input': {
+                padding: '14px 12px 12px',
+              },
+            }}
+          />
+          <TextField
+            fullWidth
+            type="date"
+            label="End Date"
+            value={endDate}
+            onChange={(event) => setEndDate(event.target.value)}
+            variant="outlined"
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+                sx: { left: 12 },
+              },
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Calendar color="rgba(100,116,139,0.65)" size={18} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{
+              ...filterControlSx,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '8px',
+                backgroundColor: 'var(--bg-surface)',
+                color: 'var(--text-primary)',
+                minHeight: 56,
+              },
+              '& .MuiOutlinedInput-input': {
+                padding: '14px 12px 12px',
+              },
+            }}
+          />
+        </Box>
+
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 5, flexWrap: 'wrap' }}>
           <Button
             variant="outlined"
             color="secondary"
-            startIcon={<RestartAltIcon />}
-            onClick={resetAllFilters}
-            sx={{ borderRadius: 3, px: 3, py: 1.2, textTransform: 'none', fontWeight: 'bold' }}
+            startIcon={<RotateCcw size={18} />}
+            onClick={handleReset}
+            sx={{
+              borderRadius: '8px',
+              px: 3,
+              py: 1.2,
+              textTransform: 'none',
+              fontWeight: 'bold',
+              borderColor: 'var(--border-color)',
+              color: 'var(--text-secondary)',
+            }}
           >
             Reset
           </Button>
           <Button
             variant="contained"
-            startIcon={<SearchIcon />}
+            startIcon={<Search size={18} />}
             onClick={handleApply}
-            sx={{ borderRadius: 3, px: 4, py: 1.2, textTransform: 'none', fontWeight: 'bold', boxShadow: '0 10px 20px rgba(25,118,210,0.35)' }}
+            sx={{
+              borderRadius: '8px',
+              px: 4,
+              py: 1.2,
+              textTransform: 'none',
+              fontWeight: 'bold',
+              background: 'linear-gradient(135deg, var(--primary-accent), var(--secondary-accent))',
+              boxShadow: '0 16px 32px var(--primary-accent-glow)',
+            }}
           >
             Apply Filters
           </Button>

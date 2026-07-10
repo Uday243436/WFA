@@ -27,11 +27,9 @@ export function EmployeeSummary() {
   }, [employees]);
 
   return (
-    <section style={{ marginBottom: '32px' }}>
-      <h2 style={{ marginBottom: '20px', color: '#0f172a', fontWeight: 800, fontSize: '22px', letterSpacing: '-0.025em' }}>
-        Employee Summary
-      </h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px' }}>
+    <section className="employee-summary-section">
+      <h2>Employee Summary</h2>
+      <div className="employee-summary-grid">
         <HeadCountCard title="Total Employees" value={summary.totalEmployees} />
         <HeadCountCard title="Active Employees" value={summary.activeEmployees} />
         <HeadCountCard title="Inactive Employees" value={summary.inactiveEmployees} />

@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface HeadCountCardProps {
   title: string;
   value: number;
@@ -13,22 +15,22 @@ export function HeadCountCard({
 }: HeadCountCardProps) {
   if (loading) {
     return (
-      <div className="dashboard-card" style={{ padding: '1rem', backgroundColor: '#ffffff' }}>
+      <div className="dashboard-card headcount-card">
         Loading...
       </div>
     );
   }
 
   return (
-    <div className="dashboard-card" style={{ padding: '1rem', backgroundColor: '#ffffff' }}>
-      <p className="card-title" style={{ margin: 0 }}>
+    <div className="dashboard-card headcount-card">
+      <p className="card-title">
         {title}
       </p>
-      <h2 className="card-value" style={{ margin: '12px 0' }}>
+      <h2 className="card-value">
         {value.toLocaleString()}
       </h2>
       {description && (
-        <p style={{ margin: 0, fontSize: '13px', color: '#6b7280' }}>
+        <p className="card-description">
           {description}
         </p>
       )}
@@ -36,4 +38,4 @@ export function HeadCountCard({
   );
 }
 
-export default HeadCountCard;
+export default React.memo(HeadCountCard);

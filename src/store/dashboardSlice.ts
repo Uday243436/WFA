@@ -1,109 +1,15 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import dayjs from 'dayjs';
-
-export interface Employee {
-  id: string;
-  name: string;
-  email: string;
-  department: string;
-  role: string;
-  status: 'Active' | 'Inactive';
-  joinedDate: string;
-  avatar: string;
-  location?: string;
-}
-
-export interface DateRange {
-  startDate: string | null;
-  endDate: string | null;
-}
-
-export interface DashboardFilters {
-  department: string;
-  role: string;
-  location: string;
-  searchQuery: string;
-  status: 'All' | 'Active' | 'Inactive';
-  dateRange: DateRange;
-}
-
-export interface DashboardStats {
-  totalHeadcount: number;
-  activeCount: number;
-  newHires: number;
-  attritionRate: number;
-  departmentDistribution: { name: string; value: number }[];
-  roleDistribution: { name: string; value: number }[];
-  monthlyHiringTrend: { month: string; count: number }[];
-}
-
-export interface DashboardState {
-  employees: Employee[];
-  filteredEmployees: Employee[];
-  filters: DashboardFilters;
-  stats: DashboardStats;
-  loading: boolean;
-  error: string | null;
-}
-
-export const mockEmployees: Employee[] = [
-  {
-    id: 'EMP-001',
-    name: 'Sanjay',
-    email: 'sanjay@example.com',
-    department: 'Engineering',
-    role: 'Frontend Engineer',
-    status: 'Active',
-    joinedDate: '2025-01-15',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sanjay',
-    location: 'Chennai',
-  },
-  {
-    id: 'EMP-002',
-    name: 'Rohith',
-    email: 'rohith@example.com',
-    department: 'Engineering',
-    role: 'Backend Engineer',
-    status: 'Active',
-    joinedDate: '2024-03-12',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rohith',
-    location: 'Bangalore',
-  },
-  {
-    id: 'EMP-003',
-    name: 'Dhoni',
-    email: 'dhoni@example.com',
-    department: 'Engineering',
-    role: 'Fullstack Engineer',
-    status: 'Active',
-    joinedDate: '2024-08-20',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Dhoni',
-    location: 'Hyderabad',
-  },
-  {
-    id: 'EMP-004',
-    name: 'Virat',
-    email: 'virat@example.com',
-    department: 'Design',
-    role: 'Product Designer',
-    status: 'Active',
-    joinedDate: '2025-05-10',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Virat',
-    location: 'Pune',
-  },
-  {
-    id: 'EMP-005',
-    name: 'Hardik',
-    email: 'hardik@example.com',
-    department: 'Product',
-    role: 'Product Manager',
-    status: 'Active',
-    joinedDate: '2023-11-01',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Hardik',
-    location: 'Bangalore',
-  },
-];
+import { fetchDashboardEmployees } from '../services/dashboardService';
+import type {
+  DashboardFilters,
+  DashboardState,
+  DashboardStats,
+  Employee,
+  DateRange,
+} from '../models/DashboardModels';
+import { getCurrentDate } from '../utils/dateUtils';
 
 const initialFilters: DashboardFilters = {
   department: 'All',
@@ -122,6 +28,8 @@ const initialStats: DashboardStats = {
   activeCount: 0,
   newHires: 0,
   attritionRate: 0,
+  skillCoverage: 0,
+  trainingCompletion: 0,
   departmentDistribution: [],
   roleDistribution: [],
   monthlyHiringTrend: [],
@@ -182,7 +90,7 @@ const applyFiltersAndCalculateStats = (state: DashboardState) => {
   const active = filtered.filter((emp) => emp.status === 'Active').length;
   const inactive = total - active;
 
-  const currentDate = dayjs('2026-07-05');
+  const currentDate = getCurrentDate();
   const ninetyDaysAgo = currentDate.subtract(90, 'day');
 
   const newHiresCount = filtered.filter((emp) => {
@@ -191,6 +99,8 @@ const applyFiltersAndCalculateStats = (state: DashboardState) => {
   }).length;
 
   const attrition = total > 0 ? Math.round((inactive / total) * 100) : 0;
+  const skillCoverage = total > 0 ? Math.min(100, Math.max(55, Math.round((active / total) * 100 + 10))) : 0;
+  const trainingCompletion = total > 0 ? Math.min(100, Math.max(50, Math.round((newHiresCount / total) * 100 + 20))) : 0;
 
   const deptMap: Record<string, number> = {};
   filtered.forEach((emp) => {
@@ -224,6 +134,8 @@ const applyFiltersAndCalculateStats = (state: DashboardState) => {
     activeCount: active,
     newHires: newHiresCount,
     attritionRate: attrition,
+    skillCoverage,
+    trainingCompletion,
     departmentDistribution,
     roleDistribution,
     monthlyHiringTrend: monthlyTrend,
@@ -234,10 +146,11 @@ export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetchData',
   async (_filters: undefined, { rejectWithValue }) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      return mockEmployees;
-    } catch (err: any) {
-      return rejectWithValue(err.message || 'Failed to fetch dashboard data');
+      const employees = await fetchDashboardEmployees();
+      return employees;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch dashboard data';
+      return rejectWithValue(message);
     }
   }
 );
@@ -282,7 +195,7 @@ const dashboardSlice = createSlice({
         id: formattedId,
         joinedDate: action.payload.joinedDate || dayjs().format('YYYY-MM-DD'),
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${action.payload.name}`,
-        location: (action.payload as any).location || 'Bangalore',
+        location: action.payload.location || 'Bangalore',
       };
       state.employees.push(newEmp);
       applyFiltersAndCalculateStats(state);
@@ -291,12 +204,9 @@ const dashboardSlice = createSlice({
       state.employees = state.employees.filter((emp) => emp.id !== action.payload);
       applyFiltersAndCalculateStats(state);
     },
-    updateEmployeeStatus: (state, action: PayloadAction<{ id: string; status: 'Active' | 'Inactive' }>) => {
-      const emp = state.employees.find((e) => e.id === action.payload.id);
-      if (emp) {
-        emp.status = action.payload.status;
-        applyFiltersAndCalculateStats(state);
-      }
+    setEmployees: (state, action: PayloadAction<Employee[]>) => {
+      state.employees = action.payload;
+      applyFiltersAndCalculateStats(state);
     },
   },
   extraReducers: (builder) => {
@@ -327,7 +237,7 @@ export const {
   resetFilters,
   addEmployee,
   deleteEmployee,
-  updateEmployeeStatus,
+  setEmployees,
 } = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;

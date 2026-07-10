@@ -1,11 +1,13 @@
-import React from 'react';
-import { Menu as MenuIcon, ChevronDown } from 'lucide-react';
+import { Menu as MenuIcon, Moon, Sun } from 'lucide-react';
+import type { AppTheme } from '../../theme/theme';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
+  onToggleTheme: () => void;
+  theme: AppTheme;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
+export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onToggleTheme, theme }) => {
   return (
     <header className="header">
       <div className="header-left">
@@ -16,22 +18,21 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
         >
           <MenuIcon size={20} />
         </button>
+        <div className="header-title-group">
+          <span className="header-eyebrow">People intelligence</span>
+          <strong>Workforce command center</strong>
+        </div>
       </div>
 
-      <div className="header-right">
-
-        <div className="profile-section">
-          <img 
-            src="/profile.jpg" 
-            alt="User profile" 
-            className="profile-image" 
-          />
-          <div className="profile-info">
-            <span className="profile-name">TEAM 1 A</span>
-            <span className="profile-role">People Analytics VP</span>
-          </div>
-          <ChevronDown size={14} style={{ color: 'var(--text-secondary)' }} />
-        </div>
+      <div className="header-actions">
+        <button
+          className="theme-toggle-btn"
+          onClick={onToggleTheme}
+          title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+          aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+        >
+          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+        </button>
       </div>
     </header>
   );

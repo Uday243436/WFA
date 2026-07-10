@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface Role {
   id: number;
   role: string;
@@ -31,4 +33,4 @@ export function RoleWidget({
   );
 }
 
-export default RoleWidget;
+export default React.memo(RoleWidget);

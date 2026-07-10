@@ -14,12 +14,27 @@ import DepartmentWidget from '../../components/Widgets/DepartmentWidget';
 import RoleWidget from '../../components/Widgets/RoleWidget';
 import EmployeeSummary from '../../components/Widgets/EmployeeSummary';
 import { useDashboard } from '../../hooks/useDashboard';
+import ChartContainer from '../../components/Charts/ChartContainer';
+import LineChart from '../../components/Charts/LineChart';
+import BarChart from '../../components/Charts/BarChart';
+import PieChart from '../../components/Charts/PieChart';
+import DonutChart from '../../components/Charts/DonutChart';
+import SkillAnalytics from '../../components/Analytics/SkillAnalytics';
+import {
+  baselineEmployeeTrend,
+  departmentPerformanceData,
+  workforceDistributionData,
+  skillDistributionData,
+  skillGapData,
+} from '../../constants/ChartConfig';
+import { getTodayInputValue } from '../../utils/dateUtils';
 
 interface FormInput {
   name: string;
   email: string;
   department: string;
   role: string;
+  location: string;
   status: 'Active' | 'Inactive';
   joinedDate: string;
 }
@@ -29,6 +44,7 @@ const employeeSchema: yup.ObjectSchema<FormInput> = yup.object({
   email: yup.string().required('Email address is required').email('Please enter a valid email address'),
   department: yup.string().required('Department is required'),
   role: yup.string().required('Role is required'),
+  location: yup.string().required('Location is required'),
   status: yup.mixed<'Active' | 'Inactive'>().required('Status is required').oneOf(['Active', 'Inactive']),
   joinedDate: yup.string().required('Join date is required'),
 });
@@ -49,6 +65,7 @@ export const DashboardPage: React.FC = () => {
     loading,
     error,
     loadData,
+    startRealtimeUpdates,
     addNewEmployee,
     removeEmployee,
   } = useDashboard();
@@ -68,8 +85,9 @@ export const DashboardPage: React.FC = () => {
       email: '',
       department: 'Engineering',
       role: '',
+      location: 'Bangalore',
       status: 'Active',
-      joinedDate: new Date().toISOString().split('T')[0],
+      joinedDate: getTodayInputValue(),
     },
   });
 
@@ -78,7 +96,9 @@ export const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    const poller = startRealtimeUpdates();
+    return () => poller.stop();
+  }, [loadData, startRealtimeUpdates]);
 
   const onSubmit = (data: FormInput) => {
     addNewEmployee(data);
@@ -88,8 +108,9 @@ export const DashboardPage: React.FC = () => {
       email: '',
       department: 'Engineering',
       role: '',
+      location: 'Bangalore',
       status: 'Active',
-      joinedDate: new Date().toISOString().split('T')[0],
+      joinedDate: getTodayInputValue(),
     });
     toast.success(`Successfully added ${data.name}!`);
   };
@@ -118,6 +139,9 @@ export const DashboardPage: React.FC = () => {
     return (
       <div style={{ padding: 48, color: '#ef4444', textAlign: 'center' }}>
         <h2>Error loading dashboard: {error}</h2>
+        <button className="btn-primary" style={{ marginTop: 24 }} onClick={loadData}>
+          Retry
+        </button>
       </div>
     );
   }
@@ -163,13 +187,33 @@ export const DashboardPage: React.FC = () => {
       iconName: 'TrendingDown',
       colorTheme: '#f59e0b',
     },
+    {
+      id: 'skill-coverage',
+      title: 'Skill Coverage',
+      value: `${stats.skillCoverage}%`,
+      changePercentage: '+2.7%',
+      changeDirection: 'up',
+      timeframe: 'vs last month',
+      iconName: 'Award',
+      colorTheme: '#8b5cf6',
+    },
+    {
+      id: 'training-completion',
+      title: 'Training Completion',
+      value: `${stats.trainingCompletion}%`,
+      changePercentage: '+8.9%',
+      changeDirection: 'up',
+      timeframe: 'vs last quarter',
+      iconName: 'BookOpen',
+      colorTheme: '#14b8a6',
+    },
   ];
 
   return (
-    <div style={{ padding: '0 24px 40px', width: '100%', maxWidth: 1400, margin: '0 auto' }}>
+    <div className="dashboard-page">
       <DashboardFilter />
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'center', margin: '32px 0' }}>
+      <div className="dashboard-section-header">
         <div>
           <h1 className="page-title">Workforce Analytics</h1>
           <p className="page-subtitle">Real-time metrics, filtered insights, and team trends.</p>
@@ -185,50 +229,70 @@ export const DashboardPage: React.FC = () => {
           : kpiData.map((kpi) => <KpiCard key={kpi.id} data={kpi} />)}
       </ResponsiveGrid>
 
-      <div className="dashboard" style={{ marginBottom: 32 }}>
+      <div className="dashboard dashboard-widget-grid">
         <DepartmentWidget departments={departmentsData} />
         <RoleWidget roles={rolesData} />
       </div>
 
       <EmployeeSummary />
 
+      <div className="chart-grid">
+        <ChartContainer title="Workforce Trend">
+          <LineChart data={baselineEmployeeTrend} loading={loading} />
+        </ChartContainer>
+        <ChartContainer title="Department Performance">
+          <BarChart data={departmentPerformanceData} loading={loading} />
+        </ChartContainer>
+      </div>
+
+      <div className="chart-grid">
+        <ChartContainer title="Workforce Distribution">
+          <PieChart data={workforceDistributionData} loading={loading} />
+        </ChartContainer>
+        <ChartContainer title="Skill Distribution">
+          <DonutChart data={skillDistributionData} loading={loading} />
+        </ChartContainer>
+      </div>
+
+      <SkillAnalytics skills={skillGapData} loading={loading} />
+
       <div className="table-container">
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 14 }}>
+        <table className="data-table">
           <thead>
             <tr className="table-header">
-              <th style={{ padding: '18px 24px', fontWeight: 700 }}>Employee</th>
-              <th style={{ padding: '18px 24px', fontWeight: 700 }}>ID</th>
-              <th style={{ padding: '18px 24px', fontWeight: 700 }}>Department</th>
-              <th style={{ padding: '18px 24px', fontWeight: 700 }}>Role</th>
-              <th style={{ padding: '18px 24px', fontWeight: 700 }}>Status</th>
-              <th style={{ padding: '18px 24px', fontWeight: 700 }}>Join Date</th>
-              <th style={{ padding: '18px 24px', fontWeight: 700, textAlign: 'right' }}>Actions</th>
+              <th>Employee</th>
+              <th>ID</th>
+              <th>Department</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Join Date</th>
+              <th className="table-actions-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredEmployees.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ padding: '48px 24px', textAlign: 'center', color: '#94a3b8' }}>
+                <td colSpan={7} className="table-empty-state">
                   No employees found matching the current filters.
                 </td>
               </tr>
             ) : (
               filteredEmployees.map((emp) => (
-                <tr key={emp.id} className="table-row" style={{ color: '#334155' }}>
-                  <td style={{ padding: '18px 24px' }}>
-                    <div style={{ fontWeight: 700, color: '#0f172a' }}>{emp.name}</div>
-                    <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>{emp.email}</div>
+                <tr key={emp.id} className="table-row">
+                  <td>
+                    <div className="employee-name">{emp.name}</div>
+                    <div className="employee-email">{emp.email}</div>
                   </td>
-                  <td style={{ padding: '18px 24px', fontWeight: 500 }}>{emp.id}</td>
-                  <td style={{ padding: '18px 24px' }}>{emp.department}</td>
-                  <td style={{ padding: '18px 24px' }}>{emp.role}</td>
-                  <td style={{ padding: '18px 24px' }}>
+                  <td className="table-id-cell">{emp.id}</td>
+                  <td>{emp.department}</td>
+                  <td>{emp.role}</td>
+                  <td>
                     <span className={`status-badge ${emp.status === 'Active' ? 'status-active' : 'status-inactive'}`}>
                       {emp.status}
                     </span>
                   </td>
-                  <td style={{ padding: '18px 24px' }}>{emp.joinedDate}</td>
-                  <td style={{ padding: '18px 24px', textAlign: 'right' }}>
+                  <td>{emp.joinedDate}</td>
+                  <td className="table-actions-cell">
                     <button
                       className="btn-remove"
                       onClick={() => {
@@ -249,11 +313,12 @@ export const DashboardPage: React.FC = () => {
       {isModalOpen && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 800 }}>Add New Employee</h3>
+            <div className="modal-header">
+              <h3>Add New Employee</h3>
               <button
+                className="modal-close-btn"
                 onClick={() => setIsModalOpen(false)}
-                style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#64748b', lineHeight: 1 }}
+                aria-label="Close modal"
               >
                 &times;
               </button>
@@ -271,7 +336,7 @@ export const DashboardPage: React.FC = () => {
                 {errors.email && <span className="error-text">{errors.email.message}</span>}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-grid">
                 <div className="form-group">
                   <label className="form-label">Department</label>
                   <select className="form-input" {...register('department')}>
@@ -298,7 +363,13 @@ export const DashboardPage: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label className="form-label">Location</label>
+                <input type="text" className="form-input" placeholder="Bangalore" {...register('location')} />
+                {errors.location && <span className="error-text">{errors.location.message}</span>}
+              </div>
+
+              <div className="form-grid">
                 <div className="form-group">
                   <label className="form-label">Status</label>
                   <select className="form-input" {...register('status')}>
@@ -314,11 +385,11 @@ export const DashboardPage: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24 }}>
+              <div className="modal-actions">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  style={{ padding: '10px 18px', borderRadius: 8, border: '1px solid #cbd5e1', backgroundColor: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 600, color: '#475569' }}
+                  className="btn-secondary"
                 >
                   Cancel
                 </button>

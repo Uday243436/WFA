@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface Department {
   id: number;
   department: string;
@@ -31,4 +33,4 @@ export function DepartmentWidget({
   );
 }
 
-export default DepartmentWidget;
+export default React.memo(DepartmentWidget);
