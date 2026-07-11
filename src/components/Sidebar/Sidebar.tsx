@@ -1,21 +1,16 @@
 import React from 'react';
 import { Menu } from '../Navigation/Menu';
 import type { MenuItem } from '../Navigation/Menu';
-import { Activity, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Activity } from 'lucide-react';
 
 interface SidebarProps {
-  collapsed: boolean;
-  onToggleCollapse: () => void;
   isOpenMobile: boolean;
   onCloseMobile: () => void;
-  
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
-  collapsed,
   isOpenMobile,
   onCloseMobile,
-  onToggleCollapse,
 }) => {
   const menuItems: MenuItem[] = [
     { name: 'Dashboard', path: '/dashboard', iconName: 'LayoutGrid' },
@@ -26,13 +21,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Mobile Drawer Overlay */}
       <div 
         className={`sidebar-overlay ${isOpenMobile ? 'active' : ''}`} 
         onClick={onCloseMobile}
       />
 
-      <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${isOpenMobile ? 'open' : ''}`}>
+      <aside className={`sidebar ${isOpenMobile ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-brand">
             <div className="sidebar-logo">
@@ -43,12 +37,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className="sidebar-subtitle">OS</span>
             </div>
           </div>
-          <button className="sidebar-toggle-btn" onClick={onToggleCollapse} aria-label="Toggle sidebar">
-            {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-          </button>
         </div>
 
-        {/* Navigation Menu */}
         <Menu items={menuItems} onItemClick={onCloseMobile} />
 
         <div className="sidebar-footer">

@@ -1,20 +1,18 @@
-import { Menu as MenuIcon, Moon, Sun } from 'lucide-react';
-import type { AppTheme } from '../../theme/theme';
+import { Menu as MenuIcon } from 'lucide-react';
 
 interface HeaderProps {
-  onToggleSidebar: () => void;
-  onToggleTheme: () => void;
-  theme: AppTheme;
+  onOpenSidebar: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onToggleTheme, theme }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenSidebar }) => {
   return (
     <header className="header">
       <div className="header-left">
         <button 
-          className="sidebar-toggle-btn" 
-          onClick={onToggleSidebar}
-          title="Toggle Navigation Menu"
+          className="header-menu-btn" 
+          onClick={onOpenSidebar}
+          title="Open navigation menu"
+          aria-label="Open navigation menu"
         >
           <MenuIcon size={20} />
         </button>
@@ -22,17 +20,6 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onToggleTheme, 
           <span className="header-eyebrow">People intelligence</span>
           <strong>Workforce command center</strong>
         </div>
-      </div>
-
-      <div className="header-actions">
-        <button
-          className="theme-toggle-btn"
-          onClick={onToggleTheme}
-          title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-          aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-        >
-          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-        </button>
       </div>
     </header>
   );
