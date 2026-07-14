@@ -9,6 +9,7 @@ export function EmployeeSummary() {
     const totalEmployees = employees.length;
     const activeEmployees = employees.filter((employee) => employee.status === 'Active').length;
     const inactiveEmployees = employees.filter((employee) => employee.status === 'Inactive').length;
+    const highRiskEmployees = employees.filter((employee) => employee.riskLevel === 'High').length;
 
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
@@ -22,6 +23,7 @@ export function EmployeeSummary() {
       totalEmployees,
       activeEmployees,
       inactiveEmployees,
+      highRiskEmployees,
       newJoiners,
     };
   }, [employees]);
@@ -33,6 +35,7 @@ export function EmployeeSummary() {
         <HeadCountCard title="Total Employees" value={summary.totalEmployees} />
         <HeadCountCard title="Active Employees" value={summary.activeEmployees} />
         <HeadCountCard title="Inactive Employees" value={summary.inactiveEmployees} />
+        <HeadCountCard title="High Risk" value={summary.highRiskEmployees} description="Needs HR review" />
         <HeadCountCard title="New Joiners" value={summary.newJoiners} />
       </div>
     </section>

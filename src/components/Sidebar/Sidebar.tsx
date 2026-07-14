@@ -1,7 +1,6 @@
 import React from 'react';
 import { Menu } from '../Navigation/Menu';
 import type { MenuItem } from '../Navigation/Menu';
-import { Activity } from 'lucide-react';
 
 interface SidebarProps {
   isOpenMobile: boolean;
@@ -14,6 +13,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const menuItems: MenuItem[] = [
     { name: 'Dashboard', path: '/dashboard', iconName: 'LayoutGrid' },
+    { name: 'Real-Time', path: '/realtime', iconName: 'RadioTower' },
     { name: 'Analytics', path: '/analytics', iconName: 'BarChart3' },
     { name: 'Team Directory', path: '/team', iconName: 'Users' },
     { name: 'Settings', path: '/settings', iconName: 'Settings' },
@@ -29,13 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <aside className={`sidebar ${isOpenMobile ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-brand">
-            <div className="sidebar-logo">
-              <Activity size={20} />
-            </div>
-            <div className="sidebar-text">
-              <span className="sidebar-title">Workforce</span>
-              <span className="sidebar-subtitle">OS</span>
-            </div>
+            <img className="sidebar-logo-image" src="/logo-stackly.png" alt="Stackly" />
           </div>
         </div>
 

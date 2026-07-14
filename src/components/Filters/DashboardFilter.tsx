@@ -16,10 +16,21 @@ import { Calendar, RotateCcw, Search, SlidersHorizontal } from 'lucide-react';
 import { useDashboard } from '../../hooks/useDashboard';
 import type { DashboardFilters } from '../../models/DashboardModels';
 
-const departments = ['IT', 'HR', 'Finance', 'Sales', 'Marketing'];
-const roles = ['Developer', 'Tester', 'Manager', 'HR Executive'];
+const departments = ['Engineering', 'Product', 'Design', 'Marketing', 'Sales', 'HR'];
+const roles = [
+  'Frontend Engineer',
+  'Backend Engineer',
+  'Fullstack Engineer',
+  'Engineering Manager',
+  'Product Manager',
+  'Product Designer',
+  'Marketing Specialist',
+  'Sales Executive',
+  'HR Manager',
+];
 const locations = ['Chennai', 'Bangalore', 'Hyderabad', 'Pune'];
 const statuses: DashboardFilters['status'][] = ['All', 'Active', 'Inactive'];
+const riskLevels: DashboardFilters['riskLevel'][] = ['All', 'Low', 'Medium', 'High'];
 
 const filterControlSx = {
   '& .MuiInputLabel-root': {
@@ -48,7 +59,17 @@ const filterControlSx = {
 };
 
 export function DashboardFilter() {
-  const { filters, changeDepartment, changeRole, changeLocation, changeStatus, changeSearchQuery, changeDateRange, resetAllFilters } = useDashboard();
+  const {
+    filters,
+    changeDepartment,
+    changeRole,
+    changeLocation,
+    changeStatus,
+    changeRiskLevel,
+    changeSearchQuery,
+    changeDateRange,
+    resetAllFilters,
+  } = useDashboard();
   const [searchText, setSearchText] = useState(filters.searchQuery);
   const [startDate, setStartDate] = useState(filters.dateRange.startDate || '');
   const [endDate, setEndDate] = useState(filters.dateRange.endDate || '');
@@ -82,25 +103,25 @@ export function DashboardFilter() {
       >
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
-            <SlidersHorizontal color="primary" size={28} />
+            <SlidersHorizontal color="var(--primary-accent)" size={28} />
             <Box>
               <Typography variant="h4" sx={{ fontWeight: 'bold', letterSpacing: 0, color: 'var(--primary-accent)' }}>
                 Workforce Dashboard
               </Typography>
               <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
-                Refine your view with department, role, location, date range, and search filters.
+                Refine your view with department, role, location, risk, date range, and search filters.
               </Typography>
             </Box>
           </Box>
           <Typography sx={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
-            4 filter categories · quick search
+            5 filter categories - quick search
           </Typography>
         </Box>
 
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, minmax(0, 1fr))' },
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(5, minmax(0, 1fr))' },
             gap: 3,
           }}
         >
@@ -165,6 +186,26 @@ export function DashboardFilter() {
                   {item}
                 </MenuItem>
               ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth sx={filterControlSx}>
+            <InputLabel>Risk Level</InputLabel>
+            <Select
+              value={filters.riskLevel === 'All' ? '' : filters.riskLevel}
+              label="Risk Level"
+              onChange={(e: SelectChangeEvent<string>) =>
+                changeRiskLevel((e.target.value || 'All') as DashboardFilters['riskLevel'])
+              }
+            >
+              <MenuItem value="">All Risk Levels</MenuItem>
+              {riskLevels
+                .filter((item) => item !== 'All')
+                .map((item) => (
+                  <MenuItem key={item} value={item}>
+                    {item}
+                  </MenuItem>
+                ))}
             </Select>
           </FormControl>
         </Box>

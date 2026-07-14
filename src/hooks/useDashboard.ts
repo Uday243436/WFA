@@ -1,20 +1,24 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAppDispatch, useAppSelector } from '../store';
 import {
   setDepartmentFilter,
   setRoleFilter,
   setSearchQuery,
   setStatusFilter,
+  setRiskLevelFilter,
   setLocationFilter,
   setDateRange,
   resetFilters,
-  fetchDashboardData,
   addEmployee,
   deleteEmployee,
   setEmployees,
+  setDashboardError,
+  setDashboardLoading,
 } from '../store/dashboardSlice';
-import { startRealtimePolling } from '../services/realtimeService';
 import type { Employee } from '../models/DashboardModels';
+import { fetchDashboardData } from '../services/dashboardService';
+import { createKpiCardsFromStats } from '../utils/dataTransformers';
 
 export const useDashboard = () => {
   const dispatch = useAppDispatch();
@@ -25,9 +29,34 @@ export const useDashboard = () => {
   const loading = useAppSelector((state) => state.dashboard.loading);
   const error = useAppSelector((state) => state.dashboard.error);
 
+  const dashboardQuery = useQuery({
+    queryKey: ['dashboard', filters],
+    queryFn: () => fetchDashboardData(filters),
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    retry: 2,
+  });
+
+  useEffect(() => {
+    if (dashboardQuery.data) {
+      dispatch(setEmployees(dashboardQuery.data.employees));
+      dispatch(setDashboardError(null));
+    }
+  }, [dashboardQuery.data, dispatch]);
+
+  useEffect(() => {
+    dispatch(setDashboardLoading(dashboardQuery.isLoading || dashboardQuery.isFetching));
+  }, [dashboardQuery.isFetching, dashboardQuery.isLoading, dispatch]);
+
+  useEffect(() => {
+    if (dashboardQuery.error) {
+      dispatch(setDashboardError(dashboardQuery.error.message));
+    }
+  }, [dashboardQuery.error, dispatch]);
+
   const loadData = useCallback(() => {
-    dispatch(fetchDashboardData());
-  }, [dispatch]);
+    void dashboardQuery.refetch();
+  }, [dashboardQuery]);
 
   const changeDepartment = useCallback(
     (department: string) => {
@@ -53,6 +82,13 @@ export const useDashboard = () => {
   const changeStatus = useCallback(
     (status: 'All' | 'Active' | 'Inactive') => {
       dispatch(setStatusFilter(status));
+    },
+    [dispatch]
+  );
+
+  const changeRiskLevel = useCallback(
+    (riskLevel: 'All' | 'Low' | 'Medium' | 'High') => {
+      dispatch(setRiskLevelFilter(riskLevel));
     },
     [dispatch]
   );
@@ -89,29 +125,28 @@ export const useDashboard = () => {
     [dispatch]
   );
 
-  const startRealtimeUpdates = useCallback(() => {
-    const poller = startRealtimePolling((employees: Employee[]) => {
-      dispatch(setEmployees(employees));
-    });
-    return poller;
-  }, [dispatch]);
-
   return {
     filteredEmployees,
     filters,
     stats,
+    kpis: dashboardQuery.data?.kpis ?? createKpiCardsFromStats(stats),
+    skillGaps: dashboardQuery.data?.skills ?? [],
+    lastUpdated: dashboardQuery.data?.lastUpdated,
+    dataSource: dashboardQuery.data?.source,
     loading,
     error,
+    isFetching: dashboardQuery.isFetching,
+    isEmpty: !loading && filteredEmployees.length === 0,
     loadData,
     changeDepartment,
     changeRole,
     changeLocation,
     changeSearchQuery,
     changeStatus,
+    changeRiskLevel,
     changeDateRange,
     resetAllFilters,
     addNewEmployee,
     removeEmployee,
-    startRealtimeUpdates,
   };
 };

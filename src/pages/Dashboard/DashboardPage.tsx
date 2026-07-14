@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -6,7 +6,6 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import ResponsiveGrid from '../../components/Layout/ResponsiveGrid';
-import type { KpiCardModel } from '../../models/KpiCardModel';
 import KpiCard from '../../components/KpiCard/KpiCard';
 import KpiCardSkeleton from '../../components/KpiCard/KpiCardSkeleton';
 import DashboardFilter from '../../components/Filters/DashboardFilter';
@@ -20,13 +19,7 @@ import BarChart from '../../components/Charts/BarChart';
 import PieChart from '../../components/Charts/PieChart';
 import DonutChart from '../../components/Charts/DonutChart';
 import SkillAnalytics from '../../components/Analytics/SkillAnalytics';
-import {
-  baselineEmployeeTrend,
-  departmentPerformanceData,
-  workforceDistributionData,
-  skillDistributionData,
-  skillGapData,
-} from '../../constants/ChartConfig';
+import { useSkillAnalytics } from '../../hooks/useSkillAnalytics';
 import { getTodayInputValue } from '../../utils/dateUtils';
 
 interface FormInput {
@@ -36,6 +29,7 @@ interface FormInput {
   role: string;
   location: string;
   status: 'Active' | 'Inactive';
+  riskLevel: 'Low' | 'Medium' | 'High';
   joinedDate: string;
 }
 
@@ -46,6 +40,7 @@ const employeeSchema: yup.ObjectSchema<FormInput> = yup.object({
   role: yup.string().required('Role is required'),
   location: yup.string().required('Location is required'),
   status: yup.mixed<'Active' | 'Inactive'>().required('Status is required').oneOf(['Active', 'Inactive']),
+  riskLevel: yup.mixed<'Low' | 'Medium' | 'High'>().required('Risk level is required').oneOf(['Low', 'Medium', 'High']),
   joinedDate: yup.string().required('Join date is required'),
 });
 
@@ -62,13 +57,15 @@ export const DashboardPage: React.FC = () => {
   const {
     filteredEmployees,
     stats,
+    kpis,
     loading,
     error,
+    isFetching,
     loadData,
-    startRealtimeUpdates,
     addNewEmployee,
     removeEmployee,
   } = useDashboard();
+  const skillAnalyticsQuery = useSkillAnalytics();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -87,18 +84,13 @@ export const DashboardPage: React.FC = () => {
       role: '',
       location: 'Bangalore',
       status: 'Active',
+      riskLevel: 'Low',
       joinedDate: getTodayInputValue(),
     },
   });
 
   const selectedDepartment = watch('department');
   const availableRoles = departmentRoles[selectedDepartment] || [];
-
-  useEffect(() => {
-    loadData();
-    const poller = startRealtimeUpdates();
-    return () => poller.stop();
-  }, [loadData, startRealtimeUpdates]);
 
   const onSubmit = (data: FormInput) => {
     addNewEmployee(data);
@@ -110,6 +102,7 @@ export const DashboardPage: React.FC = () => {
       role: '',
       location: 'Bangalore',
       status: 'Active',
+      riskLevel: 'Low',
       joinedDate: getTodayInputValue(),
     });
     toast.success(`Successfully added ${data.name}!`);
@@ -146,87 +139,29 @@ export const DashboardPage: React.FC = () => {
     );
   }
 
-  const kpiData: KpiCardModel[] = [
-    {
-      id: 'headcount',
-      title: 'Total Headcount',
-      value: stats.totalHeadcount.toLocaleString(),
-      changePercentage: '+4.2%',
-      changeDirection: 'up',
-      timeframe: 'vs last month',
-      iconName: 'Users',
-      colorTheme: '#6366f1',
-    },
-    {
-      id: 'active-roles',
-      title: 'Active Count',
-      value: stats.activeCount.toLocaleString(),
-      changePercentage: '+12.5%',
-      changeDirection: 'up',
-      timeframe: 'vs last month',
-      iconName: 'Activity',
-      colorTheme: '#10b981',
-    },
-    {
-      id: 'new-hires',
-      title: 'New Hires (90 Days)',
-      value: stats.newHires.toLocaleString(),
-      changePercentage: '+3.1%',
-      changeDirection: 'up',
-      timeframe: 'vs last quarter',
-      iconName: 'UserPlus',
-      colorTheme: '#3b82f6',
-    },
-    {
-      id: 'attrition',
-      title: 'Attrition Rate',
-      value: `${stats.attritionRate}%`,
-      changePercentage: stats.attritionRate > 0 ? '-0.4%' : '0.0%',
-      changeDirection: stats.attritionRate > 0 ? 'down' : 'neutral',
-      timeframe: 'vs last month',
-      iconName: 'TrendingDown',
-      colorTheme: '#f59e0b',
-    },
-    {
-      id: 'skill-coverage',
-      title: 'Skill Coverage',
-      value: `${stats.skillCoverage}%`,
-      changePercentage: '+2.7%',
-      changeDirection: 'up',
-      timeframe: 'vs last month',
-      iconName: 'Award',
-      colorTheme: '#8b5cf6',
-    },
-    {
-      id: 'training-completion',
-      title: 'Training Completion',
-      value: `${stats.trainingCompletion}%`,
-      changePercentage: '+8.9%',
-      changeDirection: 'up',
-      timeframe: 'vs last quarter',
-      iconName: 'BookOpen',
-      colorTheme: '#14b8a6',
-    },
-  ];
+  const skillDistribution = skillAnalyticsQuery.data?.distribution ?? [];
+  const skillGaps = skillAnalyticsQuery.data?.skills ?? [];
+  const chartsLoading = isFetching || skillAnalyticsQuery.isFetching;
 
   return (
     <div className="dashboard-page">
-      <DashboardFilter />
-
-      <div className="dashboard-section-header">
+      <div className="page-header">
         <div>
+          <span className="page-kicker">Stackly workforce platform</span>
           <h1 className="page-title">Workforce Analytics</h1>
-          <p className="page-subtitle">Real-time metrics, filtered insights, and team trends.</p>
+          <p className="page-subtitle">Real-time workforce visibility, risk monitoring, and skill gap intelligence.</p>
         </div>
         <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
           Add Employee
         </button>
       </div>
 
+      <DashboardFilter />
+
       <ResponsiveGrid columns={{ mobile: 1, tablet: 2, desktop: 4 }}>
         {loading
-          ? Array.from({ length: 4 }).map((_, index) => <KpiCardSkeleton key={index} />)
-          : kpiData.map((kpi) => <KpiCard key={kpi.id} data={kpi} />)}
+          ? Array.from({ length: 7 }).map((_, index) => <KpiCardSkeleton key={index} />)
+          : kpis.map((kpi) => <KpiCard key={kpi.id} data={kpi} />)}
       </ResponsiveGrid>
 
       <div className="dashboard dashboard-widget-grid">
@@ -238,23 +173,32 @@ export const DashboardPage: React.FC = () => {
 
       <div className="chart-grid">
         <ChartContainer title="Workforce Trend">
-          <LineChart data={baselineEmployeeTrend} loading={loading} />
+          <LineChart data={stats.monthlyHiringTrend} loading={chartsLoading} />
         </ChartContainer>
         <ChartContainer title="Department Performance">
-          <BarChart data={departmentPerformanceData} loading={loading} />
+          <BarChart data={stats.departmentDistribution} loading={chartsLoading} />
         </ChartContainer>
       </div>
 
       <div className="chart-grid">
-        <ChartContainer title="Workforce Distribution">
-          <PieChart data={workforceDistributionData} loading={loading} />
+        <ChartContainer title="Department Distribution">
+          <PieChart data={stats.departmentDistribution} loading={chartsLoading} />
         </ChartContainer>
-        <ChartContainer title="Skill Distribution">
-          <DonutChart data={skillDistributionData} loading={loading} />
+        <ChartContainer title="Risk Distribution">
+          <PieChart data={stats.riskDistribution} loading={chartsLoading} />
         </ChartContainer>
       </div>
 
-      <SkillAnalytics skills={skillGapData} loading={loading} />
+      <div className="chart-grid">
+        <ChartContainer title="Skill Distribution">
+          <DonutChart data={skillDistribution} loading={skillAnalyticsQuery.isFetching} />
+        </ChartContainer>
+        <ChartContainer title="Role Distribution">
+          <PieChart data={stats.roleDistribution} loading={chartsLoading} />
+        </ChartContainer>
+      </div>
+
+      <SkillAnalytics skills={skillGaps} loading={skillAnalyticsQuery.isFetching} />
 
       <div className="table-container">
         <table className="data-table">
@@ -265,6 +209,7 @@ export const DashboardPage: React.FC = () => {
               <th>Department</th>
               <th>Role</th>
               <th>Status</th>
+              <th>Risk</th>
               <th>Join Date</th>
               <th className="table-actions-cell">Actions</th>
             </tr>
@@ -272,7 +217,7 @@ export const DashboardPage: React.FC = () => {
           <tbody>
             {filteredEmployees.length === 0 ? (
               <tr>
-                <td colSpan={7} className="table-empty-state">
+                <td colSpan={8} className="table-empty-state">
                   No employees found matching the current filters.
                 </td>
               </tr>
@@ -289,6 +234,11 @@ export const DashboardPage: React.FC = () => {
                   <td>
                     <span className={`status-badge ${emp.status === 'Active' ? 'status-active' : 'status-inactive'}`}>
                       {emp.status}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`risk-badge risk-${emp.riskLevel.toLowerCase()}`}>
+                      {emp.riskLevel}
                     </span>
                   </td>
                   <td>{emp.joinedDate}</td>
@@ -378,6 +328,18 @@ export const DashboardPage: React.FC = () => {
                   </select>
                   {errors.status && <span className="error-text">{errors.status.message}</span>}
                 </div>
+                <div className="form-group">
+                  <label className="form-label">Risk Level</label>
+                  <select className="form-input" {...register('riskLevel')}>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                  {errors.riskLevel && <span className="error-text">{errors.riskLevel.message}</span>}
+                </div>
+              </div>
+
+              <div className="form-grid">
                 <div className="form-group">
                   <label className="form-label">Join Date</label>
                   <input type="date" className="form-input" {...register('joinedDate')} />

@@ -6,6 +6,7 @@ import DashboardPage from '../pages/Dashboard/DashboardPage';
 const AnalyticsPage = React.lazy(() => import('../pages/AnalyticsPage'));
 const TeamPage = React.lazy(() => import('../pages/TeamPage'));
 const SettingsPage = React.lazy(() => import('../pages/SettingsPage'));
+const RealtimeDashboard = React.lazy(() => import('../pages/RealtimeDashboard'));
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -13,6 +14,14 @@ export const AppRoutes: React.FC = () => {
       <Route path="/" element={<DashboardLayout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
+        <Route
+          path="realtime"
+          element={
+            <React.Suspense fallback={<div style={{ padding: 32 }}>Loading real-time dashboard...</div>}>
+              <RealtimeDashboard />
+            </React.Suspense>
+          }
+        />
         <Route
           path="analytics"
           element={

@@ -5,6 +5,7 @@ export interface Employee {
   department: string;
   role: string;
   status: 'Active' | 'Inactive';
+  riskLevel: 'Low' | 'Medium' | 'High';
   joinedDate: string;
   avatar: string;
   location: string;
@@ -21,6 +22,7 @@ export interface DashboardFilters {
   location: string;
   searchQuery: string;
   status: 'All' | 'Active' | 'Inactive';
+  riskLevel: 'All' | 'Low' | 'Medium' | 'High';
   dateRange: DateRange;
 }
 
@@ -29,10 +31,12 @@ export interface DashboardStats {
   activeCount: number;
   newHires: number;
   attritionRate: number;
+  highRiskCount: number;
   skillCoverage: number;
   trainingCompletion: number;
   departmentDistribution: { name: string; value: number }[];
   roleDistribution: { name: string; value: number }[];
+  riskDistribution: { name: string; value: number }[];
   monthlyHiringTrend: { month: string; count: number }[];
 }
 
@@ -69,6 +73,7 @@ export const mockEmployees: Employee[] = [
     department: 'Engineering',
     role: 'Frontend Engineer',
     status: 'Active',
+    riskLevel: 'Low',
     joinedDate: '2025-01-15',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sanjay',
     location: 'Chennai',
@@ -80,6 +85,7 @@ export const mockEmployees: Employee[] = [
     department: 'Engineering',
     role: 'Backend Engineer',
     status: 'Active',
+    riskLevel: 'Medium',
     joinedDate: '2024-03-12',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rohith',
     location: 'Bangalore',
@@ -91,6 +97,7 @@ export const mockEmployees: Employee[] = [
     department: 'Engineering',
     role: 'Fullstack Engineer',
     status: 'Active',
+    riskLevel: 'High',
     joinedDate: '2024-08-20',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Dhoni',
     location: 'Hyderabad',
@@ -102,6 +109,7 @@ export const mockEmployees: Employee[] = [
     department: 'Design',
     role: 'Product Designer',
     status: 'Active',
+    riskLevel: 'Low',
     joinedDate: '2025-05-10',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Virat',
     location: 'Pune',
@@ -113,6 +121,7 @@ export const mockEmployees: Employee[] = [
     department: 'Product',
     role: 'Product Manager',
     status: 'Active',
+    riskLevel: 'Medium',
     joinedDate: '2023-11-01',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Hardik',
     location: 'Bangalore',
