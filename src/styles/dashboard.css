@@ -3,7 +3,7 @@
 :root {
   --transition-speed: 0.3s;
   --sidebar-width: 260px;
-  --header-height: 70px;
+  --sidebar-header-height: 70px;
   --bg-background: #f6f8fb;
   --bg-background-soft: #edf4ff;
   --bg-surface: #ffffff;
@@ -76,7 +76,7 @@ body {
 }
 
 .sidebar-header {
-  height: var(--header-height);
+  height: var(--sidebar-header-height);
   display: flex;
   align-items: center;
   justify-content: flex-start;
