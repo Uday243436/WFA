@@ -1,14 +1,9 @@
 import React from 'react';
-
-interface Department {
-  id: number;
-  department: string;
-  employees: number;
-}
+import type { DepartmentSummary } from '../../types/dashboard';
 
 interface DepartmentWidgetProps {
   title?: string;
-  departments: Department[];
+  departments: DepartmentSummary[];
 }
 
 export function DepartmentWidget({

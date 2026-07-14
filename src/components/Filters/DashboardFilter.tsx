@@ -14,7 +14,7 @@ import {
 import type { SelectChangeEvent } from '@mui/material';
 import { Calendar, RotateCcw, Search, SlidersHorizontal } from 'lucide-react';
 import { useDashboard } from '../../hooks/useDashboard';
-import type { DashboardFilters } from '../../models/DashboardModels';
+import type { DashboardFilters } from '../../types/filters';
 
 const departments = ['Engineering', 'Product', 'Design', 'Marketing', 'Sales', 'HR'];
 const roles = [

@@ -9,6 +9,7 @@ import type {
   Employee,
   DateRange,
 } from '../models/DashboardModels';
+import type { NewEmployeeInput } from '../types/employee';
 import { calculateDashboardStats, defaultDashboardFilters, emptyDashboardStats, filterEmployees } from '../utils/dataTransformers';
 
 const initialFilters: DashboardFilters = defaultDashboardFilters;
@@ -76,11 +77,15 @@ const dashboardSlice = createSlice({
       applyFiltersAndCalculateStats(state);
     },
     resetFilters: (state) => {
-      state.filters = initialFilters;
+      state.filters = { ...initialFilters, dateRange: { ...initialFilters.dateRange } };
       applyFiltersAndCalculateStats(state);
     },
-    addEmployee: (state, action: PayloadAction<Omit<Employee, 'id' | 'avatar'>>) => {
-      const nextIdNum = state.employees.length + 1;
+    addEmployee: (state, action: PayloadAction<NewEmployeeInput>) => {
+      const nextIdNum =
+        state.employees.reduce((maxId, employee) => {
+          const numericId = Number(employee.id.replace('EMP-', ''));
+          return Number.isFinite(numericId) ? Math.max(maxId, numericId) : maxId;
+        }, 0) + 1;
       const formattedId = `EMP-${String(nextIdNum).padStart(3, '0')}`;
       const newEmp: Employee = {
         ...action.payload,

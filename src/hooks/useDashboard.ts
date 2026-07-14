@@ -16,13 +16,14 @@ import {
   setDashboardError,
   setDashboardLoading,
 } from '../store/dashboardSlice';
-import type { Employee } from '../models/DashboardModels';
+import type { NewEmployeeInput } from '../types/employee';
 import { fetchDashboardData } from '../services/dashboardService';
 import { createKpiCardsFromStats } from '../utils/dataTransformers';
 
 export const useDashboard = () => {
   const dispatch = useAppDispatch();
 
+  const employees = useAppSelector((state) => state.dashboard.employees);
   const filteredEmployees = useAppSelector((state) => state.dashboard.filteredEmployees);
   const filters = useAppSelector((state) => state.dashboard.filters);
   const stats = useAppSelector((state) => state.dashboard.stats);
@@ -30,8 +31,8 @@ export const useDashboard = () => {
   const error = useAppSelector((state) => state.dashboard.error);
 
   const dashboardQuery = useQuery({
-    queryKey: ['dashboard', filters],
-    queryFn: () => fetchDashboardData(filters),
+    queryKey: ['dashboard'],
+    queryFn: () => fetchDashboardData(),
     staleTime: 60_000,
     gcTime: 5 * 60_000,
     retry: 2,
@@ -112,7 +113,7 @@ export const useDashboard = () => {
   }, [dispatch]);
 
   const addNewEmployee = useCallback(
-    (employeeData: Omit<Employee, 'id' | 'avatar'>) => {
+    (employeeData: NewEmployeeInput) => {
       dispatch(addEmployee(employeeData));
     },
     [dispatch]
@@ -126,10 +127,11 @@ export const useDashboard = () => {
   );
 
   return {
+    employees,
     filteredEmployees,
     filters,
     stats,
-    kpis: dashboardQuery.data?.kpis ?? createKpiCardsFromStats(stats),
+    kpis: createKpiCardsFromStats(stats),
     skillGaps: dashboardQuery.data?.skills ?? [],
     lastUpdated: dashboardQuery.data?.lastUpdated,
     dataSource: dashboardQuery.data?.source,

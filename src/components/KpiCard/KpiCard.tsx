@@ -1,6 +1,6 @@
 import React from 'react';
 import * as Icons from 'lucide-react';
-import type { KpiCardModel } from '../../models/KpiCardModel';
+import type { KpiCardModel } from '../../types/dashboard';
 
 interface KpiCardProps {
   data: KpiCardModel;

@@ -1,5 +1,8 @@
-import type { DashboardFilters, DashboardStats, Employee, SkillGap } from '../models/DashboardModels';
-import type { KpiCardModel } from '../models/KpiCardModel';
+import type { Employee } from './employee';
+import type { DashboardFilters } from './filters';
+import type { DashboardStats, KpiCardModel, SkillGap } from './dashboard';
+
+export type { Department } from './dashboard';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -29,12 +32,6 @@ export interface DashboardApiResponse {
   skills: SkillGap[];
   lastUpdated: string;
   source: 'api' | 'mock';
-}
-
-export interface Department {
-  id: string;
-  name: string;
-  employeeCount: number;
 }
 
 export interface KpiMetric {

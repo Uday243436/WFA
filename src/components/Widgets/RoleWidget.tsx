@@ -1,14 +1,9 @@
 import React from 'react';
-
-interface Role {
-  id: number;
-  role: string;
-  employees: number;
-}
+import type { RoleSummary } from '../../types/dashboard';
 
 interface RoleWidgetProps {
   title?: string;
-  roles: Role[];
+  roles: RoleSummary[];
 }
 
 export function RoleWidget({

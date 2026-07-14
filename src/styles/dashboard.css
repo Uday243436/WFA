@@ -468,6 +468,9 @@ body {
   border-radius: 8px;
   box-shadow: var(--shadow-lg);
   overflow: hidden;
+  max-height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
@@ -483,6 +486,12 @@ body {
   font-size: 18px;
   color: var(--text-primary);
   font-weight: 800;
+}
+
+.modal-form-scroll {
+  padding: 24px;
+  overflow-y: auto;
+  max-height: calc(100vh - 210px);
 }
 
 .modal-close-btn {

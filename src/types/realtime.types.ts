@@ -1,4 +1,5 @@
-import type { ChartSegment, Employee, LineChartData } from '../models/DashboardModels';
+import type { Employee } from './employee';
+import type { ChartSegment, LineChartData } from './dashboard';
 import type { KpiMetric } from './api.types';
 
 export type RealtimeConnectionStatus = 'connected' | 'reconnecting' | 'disconnected';

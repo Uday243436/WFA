@@ -1,69 +1,35 @@
-export interface Employee {
-  id: string;
-  name: string;
-  email: string;
-  department: string;
-  role: string;
-  status: 'Active' | 'Inactive';
-  riskLevel: 'Low' | 'Medium' | 'High';
-  joinedDate: string;
-  avatar: string;
-  location: string;
-}
+import type { Employee } from '../types/employee';
 
-export interface DateRange {
-  startDate: string | null;
-  endDate: string | null;
-}
-
-export interface DashboardFilters {
-  department: string;
-  role: string;
-  location: string;
-  searchQuery: string;
-  status: 'All' | 'Active' | 'Inactive';
-  riskLevel: 'All' | 'Low' | 'Medium' | 'High';
-  dateRange: DateRange;
-}
-
-export interface DashboardStats {
-  totalHeadcount: number;
-  activeCount: number;
-  newHires: number;
-  attritionRate: number;
-  highRiskCount: number;
-  skillCoverage: number;
-  trainingCompletion: number;
-  departmentDistribution: { name: string; value: number }[];
-  roleDistribution: { name: string; value: number }[];
-  riskDistribution: { name: string; value: number }[];
-  monthlyHiringTrend: { month: string; count: number }[];
-}
-
-export interface DashboardState {
-  employees: Employee[];
-  filteredEmployees: Employee[];
-  filters: DashboardFilters;
-  stats: DashboardStats;
-  loading: boolean;
-  error: string | null;
-}
-
-export interface ChartSegment {
-  name: string;
-  value: number;
-}
-
-export interface LineChartData {
-  month: string;
-  count: number;
-}
-
-export interface SkillGap {
-  skill: string;
-  employees: number;
-  gap: string;
-}
+export type {
+  Employee,
+  EmployeeId,
+  EmployeeRiskLevel,
+  EmployeeStatus,
+  EmployeeSummaryMetrics,
+  ISODateString,
+  NewEmployeeInput,
+} from '../types/employee';
+export type {
+  DashboardFilters,
+  DateRange,
+  EmployeeRiskLevelFilter,
+  EmployeeStatusFilter,
+  FilterAllOption,
+} from '../types/filters';
+export type {
+  ChartSegment,
+  DashboardState,
+  DashboardStats,
+  Department,
+  DepartmentSummary,
+  KpiCardModel,
+  KpiChangeDirection,
+  KpiIconName,
+  LineChartData,
+  Role,
+  RoleSummary,
+  SkillGap,
+} from '../types/dashboard';
 
 export const mockEmployees: Employee[] = [
   {

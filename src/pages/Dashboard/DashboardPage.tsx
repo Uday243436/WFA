@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -21,17 +21,9 @@ import DonutChart from '../../components/Charts/DonutChart';
 import SkillAnalytics from '../../components/Analytics/SkillAnalytics';
 import { useSkillAnalytics } from '../../hooks/useSkillAnalytics';
 import { getTodayInputValue } from '../../utils/dateUtils';
+import type { NewEmployeeInput } from '../../types/employee';
 
-interface FormInput {
-  name: string;
-  email: string;
-  department: string;
-  role: string;
-  location: string;
-  status: 'Active' | 'Inactive';
-  riskLevel: 'Low' | 'Medium' | 'High';
-  joinedDate: string;
-}
+type FormInput = NewEmployeeInput;
 
 const employeeSchema: yup.ObjectSchema<FormInput> = yup.object({
   name: yup.string().required('Employee name is required').min(2, 'Name must be at least 2 characters'),
@@ -52,9 +44,12 @@ const departmentRoles: Record<string, string[]> = {
   Sales: ['Sales Executive', 'Account Manager'],
   HR: ['HR Manager', 'Talent Acquisition Specialist'],
 };
+const departments = Object.keys(departmentRoles);
+const locations = ['Chennai', 'Bangalore', 'Hyderabad', 'Pune'];
 
 export const DashboardPage: React.FC = () => {
   const {
+    employees,
     filteredEmployees,
     stats,
     kpis,
@@ -62,6 +57,7 @@ export const DashboardPage: React.FC = () => {
     error,
     isFetching,
     loadData,
+    resetAllFilters,
     addNewEmployee,
     removeEmployee,
   } = useDashboard();
@@ -74,6 +70,7 @@ export const DashboardPage: React.FC = () => {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<FormInput>({
     resolver: yupResolver(employeeSchema),
@@ -81,7 +78,7 @@ export const DashboardPage: React.FC = () => {
       name: '',
       email: '',
       department: 'Engineering',
-      role: '',
+      role: departmentRoles.Engineering[0],
       location: 'Bangalore',
       status: 'Active',
       riskLevel: 'Low',
@@ -90,16 +87,30 @@ export const DashboardPage: React.FC = () => {
   });
 
   const selectedDepartment = watch('department');
-  const availableRoles = departmentRoles[selectedDepartment] || [];
+  const availableRoles = useMemo(() => departmentRoles[selectedDepartment] || [], [selectedDepartment]);
+  const selectedRole = watch('role');
+
+  useEffect(() => {
+    if (availableRoles.length > 0 && !availableRoles.includes(selectedRole)) {
+      setValue('role', availableRoles[0], { shouldValidate: true });
+    }
+  }, [availableRoles, selectedRole, setValue]);
 
   const onSubmit = (data: FormInput) => {
+    const emailExists = employees.some((employee) => employee.email.toLowerCase() === data.email.toLowerCase());
+    if (emailExists) {
+      toast.error('An employee with this email already exists.');
+      return;
+    }
+
     addNewEmployee(data);
+    resetAllFilters();
     setIsModalOpen(false);
     reset({
       name: '',
       email: '',
       department: 'Engineering',
-      role: '',
+      role: departmentRoles.Engineering[0],
       location: 'Bangalore',
       status: 'Active',
       riskLevel: 'Low',
@@ -273,7 +284,7 @@ export const DashboardPage: React.FC = () => {
                 &times;
               </button>
             </div>
-            <form onSubmit={handleSubmit(onSubmit)} style={{ padding: 24 }}>
+            <form className="modal-form-scroll" onSubmit={handleSubmit(onSubmit)}>
               <div className="form-group">
                 <label className="form-label">Employee Name</label>
                 <input type="text" className="form-input" placeholder="Enter employee name" {...register('name')} />
@@ -290,19 +301,17 @@ export const DashboardPage: React.FC = () => {
                 <div className="form-group">
                   <label className="form-label">Department</label>
                   <select className="form-input" {...register('department')}>
-                    <option value="Engineering">Engineering</option>
-                    <option value="Product">Product</option>
-                    <option value="Design">Design</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Sales">Sales</option>
-                    <option value="HR">HR</option>
+                    {departments.map((department) => (
+                      <option key={department} value={department}>
+                        {department}
+                      </option>
+                    ))}
                   </select>
                   {errors.department && <span className="error-text">{errors.department.message}</span>}
                 </div>
                 <div className="form-group">
                   <label className="form-label">Role</label>
                   <select className="form-input" {...register('role')}>
-                    <option value="">Select Role</option>
                     {availableRoles.map((role) => (
                       <option key={role} value={role}>
                         {role}
@@ -315,7 +324,13 @@ export const DashboardPage: React.FC = () => {
 
               <div className="form-group">
                 <label className="form-label">Location</label>
-                <input type="text" className="form-input" placeholder="Bangalore" {...register('location')} />
+                <select className="form-input" {...register('location')}>
+                  {locations.map((location) => (
+                    <option key={location} value={location}>
+                      {location}
+                    </option>
+                  ))}
+                </select>
                 {errors.location && <span className="error-text">{errors.location.message}</span>}
               </div>
 
